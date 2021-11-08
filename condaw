@@ -103,7 +103,7 @@ def setup_condaw_folder():
         os.mkdir(CONDAW_FOLDER)
 
 
-def prepare_conda_environment():
+def prepare_conda_installation():
     """
     try to find a conda environment, and install one if not found
     :rtype: str
@@ -187,7 +187,7 @@ def run_task():
 
 def main():
     setup_condaw_folder()
-    prepare_conda_environment()
+    prepare_conda_installation()
     setup_conda_dependency()
     run_task()
 
