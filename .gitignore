@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# .condaw temp folder
+.condaw
+
+# IDEA project
+.idea

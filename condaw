@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+"""
+the condaw command line utility
+its like gradlew, but for conda!
+"""
