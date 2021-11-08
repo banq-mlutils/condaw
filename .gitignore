@@ -133,3 +133,9 @@ dmypy.json
 
 # IDEA project
 .idea
+
+# doit
+.doit.db.*
+
+# build
+build

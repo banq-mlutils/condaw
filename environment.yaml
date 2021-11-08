@@ -1,0 +1,10 @@
+name: condaw-dev
+channels:
+    - conda-forge
+    - anaconda
+dependencies:
+    - python=3.9
+    - pip
+    - pip:
+        - doit
+        - stickytape
