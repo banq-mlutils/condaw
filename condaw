@@ -174,11 +174,11 @@ def setup_local_conda():
     return CONDAW_LOCAL_CONDA_FOLDER
 
 
-def setup_conda_dependency():
+def setup_conda_dependency(conda_folder):
     pass
 
 
-def run_task():
+def run_task(conda_folder):
     pass
 
 
@@ -187,9 +187,9 @@ def run_task():
 
 def main():
     setup_condaw_folder()
-    prepare_conda_installation()
-    setup_conda_dependency()
-    run_task()
+    conda_folder = prepare_conda_installation()
+    setup_conda_dependency(conda_folder)
+    run_task(conda_folder)
 
 
 if __name__ == '__main__':
