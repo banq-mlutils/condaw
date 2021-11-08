@@ -135,7 +135,7 @@ def prepare_conda_installation():
 
     print("using conda at", folder)
     if verbose:
-        print("details:", end="")
+        print("details:")
         result = subprocess.run([path_to_conda(folder), "info"], capture_output=True, text=True)
         print(result.stdout)
 
