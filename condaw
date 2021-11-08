@@ -3,3 +3,195 @@
 the condaw command line utility
 its like gradlew, but for conda!
 """
+import os.path
+import re
+import subprocess
+
+
+# global constants #
+
+
+CONDAW_FOLDER = os.path.join(os.getcwd(), ".condaw")
+
+CONDAW_LOCAL_CONDA_FOLDER = os.path.join(CONDAW_FOLDER, "conda")
+if os.name == "nt":
+    CONDAW_LOCAL_INSTALLER_URL = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe"
+    CONDAW_LOCAL_INSTALLER_PATH = os.path.join(CONDAW_FOLDER, "Miniconda3-latest-Windows-x86_64.exe")
+    CONDAW_LOCAL_INSTALL_ARGS = (
+        "/InstallationType=JustMe",
+        "/AddToPath=0",
+        "/S",
+        "/D="+os.path.abspath(CONDAW_LOCAL_CONDA_FOLDER)
+    )
+else:
+    CONDAW_LOCAL_INSTALLER_URL = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    CONDAW_LOCAL_INSTALLER_PATH = os.path.join(CONDAW_FOLDER, "Miniconda3-latest-Linux-x86_64.sh")
+    CONDAW_LOCAL_INSTALL_ARGS = (
+        "-b",
+        "-p", os.path.abspath(CONDAW_LOCAL_CONDA_FOLDER)
+    )
+
+
+def path_to_conda(conda_folder):
+    if os.name == "nt":
+        return os.path.join(conda_folder, "Scripts", "conda.exe")
+    else:
+        return os.path.join(conda_folder, "bin", "conda")
+
+
+def path_to_python(conda_folder):
+    if os.name == "nt":
+        return os.path.join(conda_folder, "python.exe")
+    else:
+        return os.path.join(conda_folder, "bin", "python")
+
+
+CONDAW_LOCAL_CONDA_BINARY = path_to_conda(CONDAW_LOCAL_CONDA_FOLDER)
+CONDAW_LOCAL_PYTHON_BINARY = path_to_python(CONDAW_LOCAL_CONDA_FOLDER)
+
+
+# global configs #
+
+
+verbose = False
+
+
+# utils #
+
+
+def print_verbose(*args):
+    """
+    print only in verbose
+    """
+    if verbose:
+        print(*args)
+
+
+def is_windows():
+    """
+    is this a windows machine?
+    :rtype: bool
+    """
+    return os.name == "nt"
+
+
+def download_from_url(url, path):
+    """
+    download a file into path
+    :type url: str
+    :type path: str
+    """
+    # try to import urlretrive, 2 & 3 compatible
+    try:
+        from urllib import urlretrive
+    except ImportError:
+        from urllib.request import urlretrieve
+
+    # download the file
+    # noinspection PyUnboundLocalVariable
+    urlretrieve(url, path)
+
+
+# main logic #
+
+
+def setup_condaw_folder():
+    """
+    make sure CONDAW_FOLDER exists
+    """
+    if not os.path.exists(CONDAW_FOLDER):
+        os.mkdir(CONDAW_FOLDER)
+
+
+def prepare_conda_environment():
+    """
+    try to find a conda environment, and install one if not found
+    :rtype: str
+    :return: path to conda installation folder
+    """
+    folder = detect_system_conda()
+    if folder:
+        print_verbose("system conda found")
+    else:
+        print_verbose("system conda not found, trying local conda")
+        folder = setup_local_conda()
+
+    print("using conda at", folder)
+    if verbose:
+        print("details:", end="")
+        result = subprocess.run([path_to_conda(folder), "info"], capture_output=True, text=True)
+        print(result.stdout)
+
+    return folder
+
+
+def detect_system_conda():
+    """
+    try to find system conda
+    returns path to the folder if exists, None if not
+    :rtype: str | None
+    """
+    try:
+        result = subprocess.run(["conda", "info"], capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        result = None # this will happen on windows if you don't have codna in PATH
+
+    if result is not None and result.returncode == 0:
+        match = re.findall(r"base environment : (?P<folder>.*)", result.stdout)
+        assert len(match) == 1, "only expecting one base environment from conda info, got " + str(len(match)) + "!"
+        folder = match[0]
+        # get rid of the (writable)
+        if folder.endswith("(writable)"):
+            folder = folder[:-len("(writable)")].strip()
+        return folder
+    else:
+        return None
+
+
+def setup_local_conda():
+    """
+    try to use local conda, install one if not found
+    returns path to the folder
+    :rtype: str
+    """
+    if not os.path.exists(CONDAW_LOCAL_CONDA_BINARY):
+        print("local conda unavailable, installing one")
+
+        if os.path.exists(CONDAW_LOCAL_INSTALLER_PATH):
+            os.remove(CONDAW_LOCAL_INSTALLER_PATH)
+        download_from_url(CONDAW_LOCAL_INSTALLER_URL, CONDAW_LOCAL_INSTALLER_PATH)
+
+        subprocess.run(
+            [CONDAW_LOCAL_INSTALLER_PATH, *CONDAW_LOCAL_INSTALL_ARGS],
+            capture_output=True, text=True, check=True
+        )
+
+        if os.path.exists(CONDAW_LOCAL_CONDA_BINARY):
+            print("successfully installed local conda")
+    else:
+        print_verbose("local conda found")
+
+    return CONDAW_LOCAL_CONDA_FOLDER
+
+
+def setup_conda_dependency():
+    pass
+
+
+def run_task():
+    pass
+
+
+# main #
+
+
+def main():
+    setup_condaw_folder()
+    prepare_conda_environment()
+    setup_conda_dependency()
+    run_task()
+
+
+if __name__ == '__main__':
+    verbose = 1
+    main()
